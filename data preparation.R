@@ -34,7 +34,7 @@ cutoff <- as.Date("2016-06-30")
 
 #############################################################
 ## load in data
-file.list <- list.files("../1. raw data/data/11304_GS_2012_2017", pattern = "11304_job_opr_part_out_cust_GS")
+file.list <- list.files("../4. Data/raw data/GS", pattern = "GS")
 data.all = do.call(rbind.fill, lapply(file.path("../1. raw data/data/11304_GS_2012_2017/",file.list,fsep = ""), function(x) read.table(x, header = TRUE, sep = "|", quote = "", dec = ".", fill = TRUE, encoding = "UTF-8")))
 
 # remove duplicates
