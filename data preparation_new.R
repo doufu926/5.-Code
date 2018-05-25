@@ -24,7 +24,7 @@ source(file.path(wd,"functions","FeatureComplain2.R",fsep="/"))
 
 #############################################################
 ## set parameters
-dealer.name <- "15099"
+dealer.name <- "12021"
 branch.name <- "HO"
 # for active customer
 cutoff <- as.Date("2017-04-01")
