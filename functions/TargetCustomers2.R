@@ -27,9 +27,9 @@ TargetCustomers2 <- function(data.all,dealer.name,branch.name, cutoff){
   print(length(unique(data.target$VIN_NO)))
   
   # filter customers serviced before cut off date, and define regular customer
-  # cust.target <- subset(data.target, data.target$JOB_ORD_DT<= cutoff)
-  # print(length(unique(cust.target$VIN_NO)))
-  cust.target <- data.target
+  cust.target <- subset(data.target, data.target$JOB_ORD_DT<= cutoff)
+  print(length(unique(cust.target$VIN_NO)))
+  # cust.target <- data.target
   # calculate service interval since purchase
   cust.target$SRV_INT <- as.numeric(cust.target$JOB_ORD_DT-cust.target$VEH_SOLD_DT)
   # filter customers service time <20 days from purchase, presales customers or revisit customers

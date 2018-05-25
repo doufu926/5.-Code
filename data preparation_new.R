@@ -24,7 +24,7 @@ source(file.path(wd,"functions","FeatureComplain2.R",fsep="/"))
 
 #############################################################
 ## set parameters
-dealer.name <- "12021"
+dealer.name <- "11155"
 branch.name <- "HO"
 # for active customer
 cutoff <- as.Date("2017-04-01")
@@ -50,6 +50,11 @@ data.all <- DateProcess(data.all,'ACT_RPR_START_DT')
 data.all <- DateProcess(data.all,'ACT_RPR_END_DT')
 data.all <- TimeProcess(data.all,'RPR_START_TM')
 data.all <- TimeProcess(data.all,'RPR_END_TM')
+
+# modify colnames
+colnm <- names(data.all)
+colnm <- gsub(" ", ".", colnm)
+colnames(data.all) <- colnm
 
 #############################################################
 ## customer filtering
@@ -88,3 +93,7 @@ cust.target <- Featureparts(data.all,cust.target,cutoff)
 
 # service time
 cust.target <- FeatureDuration(data.all,cust.target,cutoff)
+
+#############################################################
+## write the data
+write.csv(cust.target,paste("../4. Data/Processed data/",dealer.name,"_target customer data.csv",sep = ""),row.names = FALSE)
