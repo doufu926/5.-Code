@@ -10,7 +10,7 @@ source(file.path(wd,"functions","DateProcess.R",fsep="/"))
 source(file.path(wd,"functions","DateProcess2.R",fsep="/"))
 source(file.path(wd,"functions","TimeProcess.R",fsep="/"))
 # for active
-source(file.path(wd,"functions","TargetCustomers2.R",fsep="/"))
+source(file.path(wd,"functions","TargetCustomers.R",fsep="/"))
 source(file.path(wd,"functions","FeatureDemo.R",fsep="/"))
 source(file.path(wd,"functions","FeatureDrive.R",fsep="/"))
 source(file.path(wd,"functions","FeatureFrequency.R",fsep="/"))
@@ -19,12 +19,11 @@ source(file.path(wd,"functions","FeatureMoney.R",fsep="/"))
 source(file.path(wd,"functions","FeatureDelay.R",fsep="/"))
 source(file.path(wd,"functions","Featureparts.R",fsep="/"))
 source(file.path(wd,"functions","FeatureDuration.R",fsep="/"))
-source(file.path(wd,"functions","FeatureComplain.R",fsep="/"))
-source(file.path(wd,"functions","FeatureComplain2.R",fsep="/"))
+source(file.path(wd,"functions","FeatureDiscount.R",fsep="/"))
 
 #############################################################
 ## set parameters
-dealer.name <- "11155"
+dealer.name <- "15099"
 branch.name <- "HO"
 # for active customer
 cutoff <- as.Date("2017-04-01")
@@ -56,9 +55,21 @@ colnm <- names(data.all)
 colnm <- gsub(" ", ".", colnm)
 colnames(data.all) <- colnm
 
+# remove non PM records
+# did PM service
+data.all$PM <- ifelse(grepl("เช็คระยะ",data.all$OP_desc)==TRUE,1,0)
+# aggregate by job
+temp <- aggregate(PM~VIN_NO+JOB_ORD_NO, data = data.all, sum)
+# find job has PM code
+temp <- subset(temp,temp$PM>0)
+temp$PM <- NULL
+temp$key <- paste(temp$VIN_NO,temp$JOB_ORD_NO)
+data.all$key <- paste(data.all$VIN_NO,data.all$JOB_ORD_NO)
+data.all <- subset(data.all,data.all$key%in%temp$key)
+
 #############################################################
 ## customer filtering
-output <- TargetCustomers2(data.all, dealer.name, branch.name,cutoff)
+output <- TargetCustomers(data.all, dealer.name, branch.name,cutoff)
 # unique target customer list
 cust.target <- output$cust.target
 # raw data,unique service records, dealer, non-fleet, na.omit
@@ -94,6 +105,8 @@ cust.target <- Featureparts(data.all,cust.target,cutoff)
 # service time
 cust.target <- FeatureDuration(data.all,cust.target,cutoff)
 
+# discount
+cust.target <- FeatureDiscount(data.all,visits.all,cust.target,cutoff)
 #############################################################
 ## write the data
 write.csv(cust.target,paste("../4. Data/Processed data/",dealer.name,"_target customer data.csv",sep = ""),row.names = FALSE)

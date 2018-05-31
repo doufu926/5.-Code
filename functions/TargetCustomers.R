@@ -13,7 +13,7 @@ TargetCustomers <- function(data.all,dealer.name,branch.name, cutoff){
   print(length(unique(data.target$VIN_NO)))
   
   # find customer max service interval
-  data.target <- unique(data.target[,c('VIN_NO','JOB_ORD_DT','VEH_SOLD_DT')])  # find unique service visits
+  data.target <- unique(data.target[,c('VIN_NO','JOB_ORD_NO','JOB_ORD_DT','VEH_SOLD_DT')])  # find unique service visits
   data.target <- na.omit(data.target)  # remove records with missing information
   data.target <- data.target[order(data.target$VIN_NO,data.target$JOB_ORD_DT),]  # sort records by vin and service date
   print(length(unique(data.target$VIN_NO)))

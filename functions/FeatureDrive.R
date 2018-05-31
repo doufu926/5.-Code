@@ -12,6 +12,10 @@ FeatureDrive <- function(data.all,cust.target,cutoff){
   #################################################################
   # estimated total mileage till cut off date
   cust.target$milage <- cust.target$ownership*cust.target$mileage_day
+  #################################################################
+  # free labor till cutoff
+  cust.target$warranty_labor <- 0
+  cust.target$warranty_labor[cust.target$milage<=50000 & cust.target$ownership<=2.5*365]=1
   
   return(cust.target)
 }
