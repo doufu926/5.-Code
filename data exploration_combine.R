@@ -204,6 +204,7 @@ profile <- cust.target %>%
                    cost_total=median(cost_total),
                    cost_trend=median(cost_trend),
                    cost_avg=median(cost_avg),
+                   cost_visit=median(cost_visit),
                    part_avg=median(part_avg),
                    part_last=median(part_last),
                    count = n())
