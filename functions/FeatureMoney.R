@@ -4,7 +4,7 @@ FeatureMoney <- function(data.all,cust.target,cutoff){
   #################################################################
   # total spending
   # select all transactions before cutoff
-  temp <- subset(data.all,data.all$JOB_ORD_DT<=cutoff)
+  temp <- subset(data.all,data.all$JOB_ORD_DT<cutoff)
   # calculate total spending for each customer
   total.cost <- TotalCost(temp)
   # aggregate by vin number
@@ -15,7 +15,10 @@ FeatureMoney <- function(data.all,cust.target,cutoff){
   #################################################################
   # total spending in last year
   # select all transactions in last year
-  temp <- subset(data.all,data.all$JOB_ORD_DT<=cutoff&data.all$JOB_ORD_DT>cutoff-365)
+  temp.date <- as.POSIXlt(cutoff)
+  temp.date$year <- temp.date$year-1
+  cutoff.last <- as.Date(temp.date)
+  temp <- subset(data.all,data.all$JOB_ORD_DT<cutoff&data.all$JOB_ORD_DT>=cutoff.last)
   # calculate total spending for each customer
   total.cost <- TotalCost(temp)
   # aggregate by vin number
@@ -25,12 +28,12 @@ FeatureMoney <- function(data.all,cust.target,cutoff){
   cust.target$cost_last[is.na(cust.target$cost_last)]=0
   
   #################################################################
-  # spend/year
-  cust.target$cost_avg <- ifelse(cust.target$visit_year<365,cust.target$cost_total,cust.target$cost_total/cust.target$visit_year*365)
-  
-  #################################################################
   # spend/visit
   cust.target$cost_visit <- cust.target$cost_total/cust.target$visit
+  
+  #################################################################
+  # spend/year
+  cust.target$cost_avg <- cust.target$cost_visit*cust.target$visit_avg
   
   #################################################################
   # spend/visit last year

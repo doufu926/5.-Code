@@ -3,7 +3,7 @@ FeatureDelay <- function(data.all,cust.target,cutoff){
   #################################################################
   ## calculate delay
   # get all service record before cutoff
-  temp <- subset(data.all,data.all$JOB_ORD_DT<=cutoff)
+  temp <- subset(data.all,data.all$JOB_ORD_DT<cutoff)
   temp <- temp[,c("VIN_NO","JOB_ORD_NO","JOB_ORD_DT","VEH_SOLD_DT","MILEAGE_OUT")]
   temp <- na.omit(temp)
   # unique service visits
@@ -42,7 +42,10 @@ FeatureDelay <- function(data.all,cust.target,cutoff){
   #################################################################
   ## calculate delay for each cust in last year
   # select record in last year
-  temp3 <- subset(temp,temp$JOB_ORD_DT<=cutoff&temp$JOB_ORD_DT>cutoff-365)
+  temp.date <- as.POSIXlt(cutoff)
+  temp.date$year <- temp.date$year-1
+  cutoff.last <- as.Date(temp.date)
+  temp3 <- subset(temp,temp$JOB_ORD_DT<cutoff&temp$JOB_ORD_DT>=cutoff.last)
   temp4 <- aggregate(delay_all~VIN_NO, data = temp3, FUN = mean)
   cust.target$delay_last <- temp4$delay_all[match(cust.target$VIN_NO,temp4$VIN_NO)]
   

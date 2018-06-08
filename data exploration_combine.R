@@ -158,8 +158,8 @@ profile <- cust.target %>%
          last_PM,
          duration_avg,
          duration_last,
-         wash,
-         wait,
+         # wash,
+         # wait,
          visit_disc_p,
          milage,
          mileage_day,
@@ -187,8 +187,8 @@ profile <- cust.target %>%
                    last_PM=median(last_PM),
                    duration_avg=median(duration_avg),
                    duration_last=median(duration_last),
-                   wash=median(wash),
-                   wait=median(wait),
+                   # wash=median(wash),
+                   # wait=median(wait),
                    visit_disc_p=median(visit_disc_p),
                    milage=median(milage),
                    mileage_day=median(mileage_day),
@@ -209,7 +209,7 @@ profile <- cust.target %>%
                    part_last=median(part_last),
                    count = n())
 
-write.csv(profile,paste("../4. Data/Processed data/",dealer.name,"_profile 10 segment.csv",sep = ""),row.names = FALSE)
+write.csv(profile,paste("../4. Data/Processed data/",dealer.name,"_profile 10 segment_inwarranty.csv",sep = ""),row.names = FALSE)
 
 #############################################################
 ## model distribution

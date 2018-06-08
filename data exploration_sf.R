@@ -13,7 +13,7 @@ wd=getwd();
 
 #############################################################
 ## set parameters
-dealer.name <- "15099"
+dealer.name <- "12021"
 branch.name <- "HO"
 # for active customer
 cutoff <- as.Date("2017-04-01")
@@ -38,8 +38,8 @@ segment <- subset(segment,segment$Decile!=0)
 cust.target$risk.bin <- cut(cust.target$Risk,breaks = seq(0,1,0.1),labels = seq(10,1))
 cust.target$segment <- cut(cust.target$Risk,breaks = c(0,0.3,0.7,1),labels = c("low","mid","high"))
 segment2 <- cust.target %>%
-  select(risk.bin,CHURN,Predict) %>%
-  group_by(risk.bin) %>%
+  select(segment,CHURN,Predict) %>%
+  group_by(segment) %>%
   dplyr::summarise(actual = sum(CHURN), predict = sum(Predict),number = n())
 segment2$acccuracy=segment2$actual/segment2$number
 

@@ -5,9 +5,7 @@ TargetCustomers <- function(data.all,dealer.name,branch.name, cutoff){
   data.target <- subset(data.all, data.all$DLR_CD==dealer.name)
   data.target <- subset(data.target, data.target$BRC_CD==branch.name)
   print(length(unique(data.target$VIN_NO)))
-  
-  
-  
+
   # non-fleet customers
   data.target <- subset(data.target, data.target$CUST_ID_TYP=="C")
   print(length(unique(data.target$VIN_NO)))
@@ -19,7 +17,7 @@ TargetCustomers <- function(data.all,dealer.name,branch.name, cutoff){
   print(length(unique(data.target$VIN_NO)))
   
   # filter customers serviced before cut off date, and define regular customer
-  cust.target <- subset(data.target, data.target$JOB_ORD_DT<= cutoff)
+  cust.target <- subset(data.target, data.target$JOB_ORD_DT< cutoff)
   print(length(unique(cust.target$VIN_NO)))
   # calculate service interval since purchase
   cust.target$SRV_INT <- as.numeric(cust.target$JOB_ORD_DT-cust.target$VEH_SOLD_DT)
@@ -41,9 +39,15 @@ TargetCustomers <- function(data.all,dealer.name,branch.name, cutoff){
   
   # get all service record for those customers including results
   cust.target <- subset(data.target, data.target$VIN_NO%in%cust.target$VIN_NO)
+  # calculate other cutoff date
+  temp.date <- as.POSIXlt(cutoff)
+  temp.date$year <- temp.date$year-1
+  cutoff.last <- as.Date(temp.date)
+  temp.date$year <- temp.date$year+2
+  cutoff.future <- as.Date(temp.date)
   # fitler customer serviced in last 12 months
-  cust.target$retain.before <- cust.target$JOB_ORD_DT> cutoff-365 & cust.target$JOB_ORD_DT<= cutoff
-  cust.target$retain <- cust.target$JOB_ORD_DT> cutoff & cust.target$JOB_ORD_DT<= cutoff+365
+  cust.target$retain.before <- cust.target$JOB_ORD_DT>= cutoff.last & cust.target$JOB_ORD_DT< cutoff
+  cust.target$retain <- cust.target$JOB_ORD_DT>= cutoff & cust.target$JOB_ORD_DT< cutoff.future
   temp1 <- aggregate(retain.before~VIN_NO, data = cust.target, sum)
   temp2 <- aggregate(retain~VIN_NO, data = cust.target, sum)
   temp2$retain.before <- temp1$retain.before[match(temp2$VIN_NO,temp1$VIN_NO)]

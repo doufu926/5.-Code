@@ -3,7 +3,7 @@ FeatureDiscount <- function(data.all,visits.all,cust.target,cutoff){
   #############################################################
   ## % of visits with discount
   # get all service record before cutoff
-  temp <- subset(data.all,data.all$JOB_ORD_DT<=cutoff)
+  temp <- subset(data.all,data.all$JOB_ORD_DT<cutoff)
   # select the useful columns
   temp <- temp[,c("VIN_NO","JOB_ORD_NO","JOB_ORD_DT","Operation.Disc..Type","Part.Disc..Type","Outside.work.disc.prct")]
   # mark visits with discount
