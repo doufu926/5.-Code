@@ -1,4 +1,4 @@
-rm(list = ls())
+# rm(list = ls())
 # load library
 library(plyr)
 library(data.table)
@@ -23,7 +23,7 @@ source(file.path(wd,"functions","FeatureDiscount.R",fsep="/"))
 
 #############################################################
 ## set parameters
-dealer.name <- "15099"
+dealer.name <- "11155"
 branch.name <- "HO"
 # for active customer
 cutoff <- as.Date("2017-04-01")
