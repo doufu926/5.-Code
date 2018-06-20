@@ -7,7 +7,7 @@ FeatureFrequency <- function(visits.all,cust.target,cutoff){
   cust.target$visit <- temp1$JOB_ORD_DT[match(cust.target$VIN_NO,temp1$VIN_NO)]
   
   #################################################################
-  ## retained period
+  ## retained period till last service date
   temp <- temp[order(temp$VIN_NO,temp$JOB_ORD_DT),]
   # find first service for each customer
   temp.first <- temp[!duplicated(temp$VIN_NO,fromLast = FALSE),]
@@ -24,7 +24,7 @@ FeatureFrequency <- function(visits.all,cust.target,cutoff){
   temp.first$visit.length4 <- ifelse(temp.first$visit.length2>15*30,ifelse(temp.first$visit.length==0,NA,temp.first$visit.length),temp.first$visit.length3)
   cust.target$visit_year <- temp.first$visit.length4[match(cust.target$VIN_NO,temp.first$VIN_NO)]
   #################################################################
-  ## retained since purchase
+  ## retained since purchase (yes or no)
   # get first service interval
   cust.target$loyal <- temp.first$visit.length2[match(cust.target$VIN_NO,temp.first$VIN_NO)]
   # if first service is more than 15 month after purchase, consider as newly retained, count retain period from first service, else from purchase

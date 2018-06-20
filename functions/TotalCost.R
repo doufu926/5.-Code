@@ -2,7 +2,9 @@
 TotalCost <- function(data.all){
   #################################################################
   # total labor cost
-  temp <- unique(data.all[,c("VIN_NO","JOB_ORD_NO","OP_CD","Invoice.Labor.amount")])
+  temp <- unique(data.all[,c("VIN_NO","JOB_ORD_NO","OP_CD","Invoice.Labor.amount","Operation.Pay.by")])
+  # if payed by warranty, cost change to 0
+  temp$Invoice.Labor.amount <- ifelse(temp$Operation.Pay.by=="W",0,temp$Invoice.Labor.amount)
   labor.cost <- aggregate(Invoice.Labor.amount~VIN_NO+JOB_ORD_NO, data = temp, sum)
   #################################################################
   # total parts cost

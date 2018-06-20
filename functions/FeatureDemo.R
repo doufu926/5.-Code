@@ -13,11 +13,7 @@ FeatureDemo <- function(data.all,visits.all,cust.target,cutoff){
   cust.target$ownership <- visits.all$VEH_SOLD_DT[match(cust.target$VIN_NO,visits.all$VIN_NO)]
   cust.target$ownership <- as.numeric(cutoff-cust.target$ownership)
   #############################################################  
-  ## warranty till cut of
-  cust.target$warranty <- 0
-  cust.target$warranty[cust.target$ownership<=365*3] <- 1
-  #############################################################  
-  ## age
+  ## age till cutoff
   temp <- data.all[,c("VIN_NO","CUST_MARITAL_STS","CUST_DOB")]
   temp <- na.omit(temp)
   temp <- unique(temp)
