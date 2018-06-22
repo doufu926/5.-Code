@@ -102,10 +102,6 @@ temp=cust.1time[cust.1time$segment=="Low",]
 plot(table(temp$last_PM))
 b=as.data.frame(table(temp$last_PM))
 
-# # plot the service pattern
-# temp2 <- subset(temp,temp$milage<=100000&temp$ownership<=5*365)
-# plot(temp2$milage,temp2$ownership,col="#00000044",xlab="Milage During Service (K)",ylab="Time Since Purchase (Month)",main="Non-regular Timing Distribution")
-
 #############################################################
 ## detailed analysis for non regular customers
 cust.nonregular <- subset(cust.target,cust.target$PM!="50K" 
@@ -124,12 +120,14 @@ profile <- cust.nonregular %>%
          interval_mean,
          interval_max,
          visit_avg,
+         visit,
          ownership,
          visit_year) %>%
   group_by(segment) %>%
   dplyr::summarise(interval_mean=median(interval_mean,na.rm = TRUE),
                    interval_max=median(interval_max,na.rm = TRUE),
                    visit_avg=median(visit_avg,na.rm = TRUE),
+                   median(visit,na.rm = TRUE),
                    ownership=median(ownership,na.rm = TRUE),
                    visit_year=median(visit_year,na.rm = TRUE),
                    count=n())
@@ -163,9 +161,9 @@ data.all[,time:= as.numeric(JOB_ORD_DT-VEH_SOLD_DT)/30]
 
 # find all service record non regular customers
 data.nonregular <- subset(data.all,VIN_NO%in%temp$VIN_NO)
-temp2 <- subset(data.nonregular,PM<=100&time<=60)
+temp2 <- subset(data.nonregular,mileage<=100&time<=60)
 # plot service pattern
-plot(temp2$PM,temp2$time,col="#00000044",xlab="Milage During Service (K)",ylab="Time Since Purchase (Month)",main="Non-regular Timing Distribution")
+plot(temp2$mileage,temp2$time,col="#00000044",xlab="Milage During Service (K)",ylab="Time Since Purchase (Month)",main="Non-regular Timing Distribution")
 
 # calculate all service interval
 temp2 <- subset(data.nonregular,JOB_ORD_DT<cutoff)
@@ -179,6 +177,4 @@ temp2[,SRV_INT2:=ave(SRV_INT, VIN_NO, FUN = function(x) c(min(x), diff(x)))/365]
 # plot service pattern
 temp3 <- subset(temp2,PM<=100)
 plot(temp3$PM,temp3$SRV_INT2,col="#00000044",xlab="Milage During Service (K)",ylab="Time Since Purchase (Month)",main="Non-regular Timing Distribution")
-boxplot(SRV_INT2~PM,data = temp3,xlab="Service Conducted (PM Mileage)",ylab="Time Gap Since Last Service",tck=0.5)
-library(Hmisc)
-minor.tick(nx=n, ny=n, tick.ratio=n)
+boxplot(SRV_INT2~PM,data = temp3,xlab="Service Conducted (PM Mileage)",ylab="Time Gap Since Last Service",outline=FALSE)
