@@ -10,7 +10,7 @@ library(plyr)
 wd=getwd();
 
 # load function
-
+source(file.path(wd,"functions","SalesService.R",fsep="/"))
 #############################################################
 ## set parameters
 dealer.name <- "12021"
@@ -35,12 +35,20 @@ cust.target$retain <- as.factor(ifelse(cust.target$retain==0,"Churned","Retained
 file.list <- list.files("../4. Data/Processed data", pattern = "test_data_results")
 cust.target2 = do.call(rbind.fill, lapply(file.path("../4. Data/Processed data/",file.list,fsep = ""), function(x) fread(x, encoding = "UTF-8")))
 
-
 # map prediction results
 cust.target$risk <- cust.target2$Risk[match(cust.target$VIN_NO,cust.target2$VIN_NO)]
 cust.target$pred <- cust.target2$Predict[match(cust.target$VIN_NO,cust.target2$VIN_NO)]
 cust.target <- subset(cust.target,!is.na(cust.target$risk))
-# cust.target$interval_max <- cust.target2$max_interval[match(cust.target$VIN_NO,cust.target2$VIN_NO)]
+
+# get sales and service features
+output <- SalesService(cust.target,cutoff)
+cust.target <- output$cust.target
+service.all <- output$service.all
+cust.target$visit_DLR_no_other <- cust.target$visit_DLR_no-1
+cust.target$visit_BRC_no_other <- cust.target$visit_BRC_no-1
+cust.target$visit_other <- cust.target$visit_total-cust.target$visit_total_current
+cust.target$visit_other_nonsales <- cust.target$visit_other-cust.target$visit_total_sales
+cust.target$visit_DLR_no_nonsales <- ifelse(cust.target$visit_total_sales>0,cust.target$visit_DLR_no_other-1,cust.target$visit_DLR_no_other)
 
 # define segment
 cust.target$segment <- cut(cust.target$risk,breaks = c(0,0.3,0.7,1),labels = c("Low","Mid","High"))
@@ -98,10 +106,28 @@ cust.1time <- subset(cust.target,cust.target$PM!="50K"
                      & cust.target$loyalty=="One Time")
 
 # what service customer come for?
-temp=cust.1time[cust.1time$segment=="Low",]
+temp=cust.1time[cust.1time$segment=="High",]
 plot(table(temp$last_PM))
 b=as.data.frame(table(temp$last_PM))
 
+# where one time customer purchase from
+purchase.dlr <- cust.target %>%
+  select(segment,
+         loyalty,
+         same_DLR) %>%
+  group_by(segment,loyalty) %>%
+  dplyr::summarise(same_DLR=1-mean(same_DLR),
+                   count=n())
+
+# where they doing service previsouly
+temp <- subset(cust.target,cust.target$loyalty=="One Time"&
+                 cust.target$segment=="High")
+
+plot(table(temp$visit_DLR_no_other))
+b=as.data.frame(table(temp$visit_DLR_no_other))
+
+plot(table(temp$visit_DLR_no_nonsales))
+b=as.data.frame(table(temp$visit_DLR_no_nonsales))
 #############################################################
 ## detailed analysis for non regular customers
 cust.nonregular <- subset(cust.target,cust.target$PM!="50K" 
@@ -112,7 +138,7 @@ cust.nonregular <- subset(cust.target,cust.target$PM!="50K"
 table(cust.nonregular$segment)
 
 # select high risk customers
-temp=cust.nonregular[cust.nonregular$segment=="High",]
+temp=cust.nonregular[cust.nonregular$segment=="Low",]
 
 # get profile
 profile <- cust.nonregular %>%
