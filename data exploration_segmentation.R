@@ -11,6 +11,7 @@ wd=getwd();
 
 # load function
 source(file.path(wd,"functions","SalesService.R",fsep="/"))
+source(file.path(wd,"functions","TotalCost.R",fsep="/"))
 #############################################################
 ## set parameters
 dealer.name <- "12021"
@@ -119,15 +120,33 @@ purchase.dlr <- cust.target %>%
   dplyr::summarise(same_DLR=1-mean(same_DLR),
                    count=n())
 
-# where they doing service previsouly
-temp <- subset(cust.target,cust.target$loyalty=="One Time"&
-                 cust.target$segment=="High")
+# for customer purchase from other DLR and only come recently
+# where they doing service previsouly (remove case from first DLR)
+temp <- subset(cust.target,cust.target$same_DLR==0&
+                      cust.target$loyalty=="One Time"&
+                      cust.target$visit_total_current==1&
+                 cust.target$ownership<=365*5) #only analyze 5 year customers, to avoid used car cases
 
-plot(table(temp$visit_DLR_no_other))
-b=as.data.frame(table(temp$visit_DLR_no_other))
+# calculate service potential
+temp$potential <- round(temp$ownership/365*2)
+temp$potential <- pmax(temp$visit_total,temp$potential)
 
-plot(table(temp$visit_DLR_no_nonsales))
-b=as.data.frame(table(temp$visit_DLR_no_nonsales))
+# how many of them visited original DLR
+temp$sales <- ifelse(temp$visit_total_sales>0,"Sales_Yes","Sales_No")
+# how many of them visited other DLR
+temp$other <- ifelse(temp$visit_DLR_no_nonsales>0,"OtherT_Yes","OtherT_No")
+# how many of them visited outside
+temp$outside <- ifelse(temp$potential>temp$visit_total,"Outside_Yes","Outside_No")
+
+service.loc <- temp %>%
+  select(visit_other,
+         segment) %>%
+  group_by(segment) %>%
+  dplyr::summarise(mean(visit_other))
+
+temp2 <- subset(temp,temp$sales=="Sales_No"&
+                  temp$other=="OtherT_Yes")
+b=as.data.frame(table(temp2$visit_DLR_no_nonsales))
 #############################################################
 ## detailed analysis for non regular customers
 cust.nonregular <- subset(cust.target,cust.target$PM!="50K" 
@@ -148,7 +167,8 @@ profile <- cust.nonregular %>%
          visit_avg,
          visit,
          ownership,
-         visit_year) %>%
+         visit_year,
+         mileage_day) %>%
   group_by(segment) %>%
   dplyr::summarise(interval_mean=median(interval_mean,na.rm = TRUE),
                    interval_max=median(interval_max,na.rm = TRUE),
@@ -156,7 +176,13 @@ profile <- cust.nonregular %>%
                    median(visit,na.rm = TRUE),
                    ownership=median(ownership,na.rm = TRUE),
                    visit_year=median(visit_year,na.rm = TRUE),
+                   mileage_day=median(mileage_day,na.rm = TRUE),
                    count=n())
+
+profile <- temp %>%
+  select(interval,mileage_day) %>%
+  group_by(interval) %>%
+  dplyr::summarise(mileage_day=median(mileage_day,na.rm = TRUE))
 
 # what service they come for?
 data.all <- as.data.frame(data.raw)
@@ -204,3 +230,57 @@ temp2[,SRV_INT2:=ave(SRV_INT, VIN_NO, FUN = function(x) c(min(x), diff(x)))/365]
 temp3 <- subset(temp2,PM<=100)
 plot(temp3$PM,temp3$SRV_INT2,col="#00000044",xlab="Milage During Service (K)",ylab="Time Since Purchase (Month)",main="Non-regular Timing Distribution")
 boxplot(SRV_INT2~PM,data = temp3,xlab="Service Conducted (PM Mileage)",ylab="Time Gap Since Last Service",outline=FALSE)
+
+
+#############################################################
+## detailed analysis for one visit customers
+cust.1visit <- subset(cust.target,cust.target$PM!="50K" 
+                          & cust.target$loyalty!="One Time" 
+                          & cust.target$interval!="Non-regular"
+                      &cust.target$visit_last_group=="1 visit")
+
+# select high risk customers
+temp=cust.nonregular[cust.nonregular$segment=="Low",]
+
+# get profile
+profile <- cust.1visit %>%
+  select(segment,
+cost_visit,
+cost_visit_last) %>%
+  group_by(segment) %>%
+  dplyr::summarise(cost_visit=median(cost_visit),
+                   cost_visit_last=median(cost_visit_last))
+
+profile <- cust.target %>%
+  select(segment,
+         cost_visit,
+         cost_visit_last) %>%
+  dplyr::summarise(cost_visit=median(cost_visit),
+                   cost_visit_last=median(cost_visit_last))
+
+# get cost for each service visit
+data.all <- as.data.frame(data.raw)
+
+# process service date
+data.all <- DateProcess(data.all,'JOB_ORD_DT')
+data.all <- DateProcess(data.all,'VEH_SOLD_DT')
+
+# modify colnames
+colnm <- names(data.all)
+colnm <- gsub(" ", ".", colnm)
+colnames(data.all) <- colnm
+
+# remove non PM records
+data.all <- setDT(data.all)
+# did PM service
+data.all[, PM := ifelse(grepl("เช็คระยะ",OP_desc)==TRUE,1,0)]
+temp <- data.all[,sum(PM),by=.(VIN_NO,JOB_ORD_NO)]
+# find job has PM code
+temp <- subset(temp,V1>0)
+temp[,key:= paste(VIN_NO,JOB_ORD_NO)]
+data.all[,key:= paste(VIN_NO,JOB_ORD_NO)]
+data.all <- subset(data.all,key%in%temp$key)
+
+# calculate cost
+data.all=as.data.frame(data.all)
+all.cost <- TotalCost(data.all)
