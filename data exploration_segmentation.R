@@ -40,6 +40,9 @@ cust.target2 = do.call(rbind.fill, lapply(file.path("../4. Data/Processed data/"
 cust.target$risk <- cust.target2$Risk[match(cust.target$VIN_NO,cust.target2$VIN_NO)]
 cust.target$pred <- cust.target2$Predict[match(cust.target$VIN_NO,cust.target2$VIN_NO)]
 cust.target <- subset(cust.target,!is.na(cust.target$risk))
+cust.target$cost_last_labor <- cust.target2$LAST_LABOR_COST[match(cust.target$VIN_NO,cust.target2$VIN_NO)]
+cust.target$cost_last_parts <- cust.target2$LAST_TOTAL_COST[match(cust.target$VIN_NO,cust.target2$VIN_NO)]
+cust.target$cost_last_parts <- cust.target$cost_last_parts-cust.target$cost_last_labor
 
 # get sales and service features
 output <- SalesService(cust.target,cutoff)
@@ -142,7 +145,8 @@ service.loc <- temp %>%
   select(visit_other,
          segment) %>%
   group_by(segment) %>%
-  dplyr::summarise(mean(visit_other))
+  dplyr::summarise(mean(visit_other),
+                 n() )
 
 temp2 <- subset(temp,temp$sales=="Sales_No"&
                   temp$other=="OtherT_Yes")
@@ -237,10 +241,14 @@ boxplot(SRV_INT2~PM,data = temp3,xlab="Service Conducted (PM Mileage)",ylab="Tim
 cust.1visit <- subset(cust.target,cust.target$PM!="50K" 
                           & cust.target$loyalty!="One Time" 
                           & cust.target$interval!="Non-regular"
-                      &cust.target$visit_last_group=="1 visit")
+                      &cust.target$visit_last_group!="1 visit")
+
+cust.loyal <- subset(cust.target,cust.target$PM!="50K" 
+                      & cust.target$loyalty!="One Time" 
+                      & cust.target$interval!="Non-regular")
 
 # select high risk customers
-temp=cust.nonregular[cust.nonregular$segment=="Low",]
+temp=cust.nonregular[cust.nonregular$segment=="High",]
 
 # get profile
 profile <- cust.1visit %>%
@@ -251,12 +259,25 @@ cost_visit_last) %>%
   dplyr::summarise(cost_visit=median(cost_visit),
                    cost_visit_last=median(cost_visit_last))
 
-profile <- cust.target %>%
+profile <- cust.1visit %>%
   select(segment,
          cost_visit,
          cost_visit_last) %>%
   dplyr::summarise(cost_visit=median(cost_visit),
                    cost_visit_last=median(cost_visit_last))
+
+profile <- cust.1visit %>%
+  select(
+         last_PM,
+         cost_visit,
+         cost_visit_last,
+         part_last,
+         cost_last_parts) %>%
+  group_by(last_PM) %>%
+  dplyr::summarise(cost_visit=median(cost_visit),
+                   cost_visit_last=median(cost_visit_last),
+                   part_last=median(part_last),
+                   cost_last_parts=median(cost_last_parts))
 
 # get cost for each service visit
 data.all <- as.data.frame(data.raw)
@@ -284,3 +305,12 @@ data.all <- subset(data.all,key%in%temp$key)
 # calculate cost
 data.all=as.data.frame(data.all)
 all.cost <- TotalCost(data.all)
+data.all <- setDT(data.all)
+temp <- data.all[,j=list(sum(PM),.N),by=list(VIN_NO,JOB_ORD_NO)]
+temp[,PM_Only:=ifelse(V1==N,1,0)]
+temp[all.cost,on = "JOB_ORD_NO"]
+all.cost <- merge(all.cost,temp,by = c("VIN_NO","JOB_ORD_NO"))
+temp <- data.all[PM==1]
+temp[,PM:=as.numeric(OP_CD)/1000]
+temp <- temp[,.(VIN_NO,JOB_ORD_NO,PM)]
+all.cost <- merge(all.cost,temp,by = c("VIN_NO","JOB_ORD_NO"))

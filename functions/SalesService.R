@@ -5,10 +5,10 @@ SalesService <- function(cust.target,cutoff){
   #############################################################
   ## load in data
   # sales
-  sales <- fread("../4. Data/Raw data/Sales/4 Pilot dealers Enhance.txt",encoding = "UTF-8")
+  sales <- fread("../4. Data/raw data/Sales/4 Pilot dealers Enhance.txt",encoding = "UTF-8")
   
   # service
-  service <- read_xlsx("../4. Data/Raw data/GS_other/service_other_DLR.xlsx")
+  service <- read_xlsx("../4. Data/raw data/GS_other/service_other_DLR.xlsx")
   
   #############################################################
   ## sales DLR
